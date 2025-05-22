@@ -1,0 +1,59 @@
+name: Release and Build Artifacts
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build extension (dev build)
+        run: yarn build-dev
+
+      # 假设构建产物在 dist 目录，可以根据你的项目实际情况修改
+      - name: Archive build output
+        run: |
+          zip -r archiveweb-page.zip dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## Installation & Development Build Instructions
+
+            To build the extension or Electron app locally for development, do the following:
+
+            1. Clone this repo:
+                ```
+                git clone https://github.com/webrecorder/archiveweb.page.git
+                ```
+            2. Change the working directory:
+                ```
+                cd archiveweb.page
+                ```
+            3. Install dependencies:
+                ```
+                yarn install
+                ```
+            4. Make development build:
+                ```
+                yarn build-dev
+                ```
+
+            Download the built artifact from this release for testing.
+          files: archiveweb-page.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
