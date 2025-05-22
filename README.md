@@ -1,103 +1,50 @@
-<h1>
-    <div align="center">
-        <img alt="ArchiveWebpage" src="src/assets/brand/archivewebpage-lockup-color-dynamic.svg" width="90%">
-    </div>
-</h1>
+# WARC Image Source Fixer
 
-ArchiveWeb.page is a JavaScript based application for interactive, high-fidelity web archiving that runs directly in the browser. The system can be used as a Chrome/Chromium based browser extension and also as a standalone Electron app.
+## Overview
 
-The system creates, stores, and replays high-fidelity web archives stored directly in the browser's storage (via IndexedDB).
+`warc_image_fixer.py` is a Python script designed to process WARC (Web ARChive) files, specifically those compressed with gzip (`.gz` extension). Its primary function is to correct `<img>` tag `src` attributes within HTML content stored in these WARC files.
 
-For more detailed info on how to use the extension and standalone app, see the [ArchiveWeb.page User Guide](https://archiveweb.page/guide).
+Web crawlers and archiving tools sometimes store the actual image URL in attributes like `data-src` or `data-backsrc`, particularly for content from dynamic websites such as `mp.weixin.qq.com` (WeChat Official Account articles). This script parses the HTML, identifies such cases, and updates the `src` attribute to point to the correct image URL. This ensures that images are displayed correctly when replaying or analyzing the archived content.
 
-The browser extension is available on the [Chrome Web Store](https://chrome.google.com/webstore/detail/webrecorder/fpeoodllldobpkbkabpblcfaogecpndd).
+The script processes each qualifying `.gz` file in the specified input folder (and its subdirectories) and creates a new WARC file with the `_fixed.warc.gz` suffix in the same location as the original file. Original files are not modified.
 
-Downloads for the desktop are are available on the [GitHub Releases page](https://github.com/webrecorder/archiveweb.page/releases).
+## Dependencies
 
-## Architecture
+*   **Python 3**: The script is written for Python 3.
+*   **Required Packages**: The script relies on the following Python packages:
+    *   `warcio`: For reading and writing WARC files.
+    *   `beautifulsoup4`: For parsing HTML content.
 
-The extension makes use of the Chrome debugging protocol to capture and save network traffic, and extends the [ReplayWeb.page](https://github.com/webrecorder/replayweb.page) UI and the [wabac.js](https://github.com/webrecorder/wabac.js) service worker system for replay and storage.
+    These dependencies are listed in the `requirements.txt` file.
 
-## Development
+## Installation
 
-The Chromium extension and Electron app are built from the same source code for ease of development.
+To install the necessary dependencies, navigate to the root directory of this repository in your terminal and run:
 
-### Prerequisites
-
-- Node >=12
-- Yarn Classic (v1)
-
-### Installation
-
-To build the extension or Electron app locally for development, do the following:
-
-1. Clone this repo:
-   ```sh
-   git clone https://github.com/webrecorder/archiveweb.page.git
-   ```
-2. Change the working directory:
-   ```sh
-   cd archiveweb.page
-   ```
-3. Install dependencies:
-   ```sh
-   yarn install
-   ```
-4. Make development build:
-   ```sh
-   yarn build-dev
-   ```
-
-The development build can now be used to develop the extension or Electron app.
-
-### Developing the Chromium extension
-
-To install the extension locally, load the development build as an unpacked extension:
-
-1. Open the Chrome Extensions page ([chrome://extensions](chrome://extensions)).
-
-2. Choose 'Load Unpacked Extension' and point to the `./dist/ext` directory in your local copy of this repo.
-
-3. Click the extension icon to show the extension popup, start archiving, etc...
-
-#### Update extension on code changes
-
-To watch source code files and recompile the development build on change, run:
-
-```sh
-yarn run start-ext
+```bash
+pip install -r requirements.txt
 ```
 
-Now, saving changes to source will automatically rebuild the `dist/ext` directory.
+Ensure you have Python 3 and pip installed on your system.
 
-After making changes, the extension still needs to be reloaded in the browser.
+## Usage
 
-1. From the Chrome extensions page, click the reload button to load the latest version.
+To use the script, run it from the command line, providing the path to the folder containing your WARC files as a command-line argument.
 
-2. Click the extension icon to show the extension popup, start recording, etc... The dev build of the extension will be a different color from the production version.
-
-### Developing the Electron app
-
-To start the Electron app using development build:
-
-```sh
-yarn run start-electron
+```bash
+python warc_image_fixer.py /path/to/your/warc_files
 ```
 
-The Electron app will open recording in a new window. It is is designed to support Flash, better support for IPFS sharing.
+Replace `/path/to/your/warc_files` with the actual path to the directory where your `.gz` WARC files are stored.
 
-#### Update app on change
+The script will:
+*   Scan the specified folder and all its subdirectories for files ending with `.gz`.
+*   For each `.gz` file found, it will attempt to process it as a WARC file.
+*   HTML content within the WARC records will be checked, and `<img>` tag sources will be fixed if necessary.
+*   A new file with the suffix `_fixed.warc.gz` (e.g., `original.warc.gz` becomes `original_fixed.warc.gz`, and `archive.gz` becomes `archive_fixed.warc.gz`) will be created in the same directory as the original file, containing the processed records.
+*   The script will output logs to the console indicating its progress, including files being processed, fixes made, and any errors encountered.
 
-Currently, the dev workflow for the Electron app does not support automatically rebuilding on file changes.
-
-After making changes, rerun `yarn run build-dev` and `yarn run start-electron` to view your changes in the app.
-
-## Standalone Build
-
-To create a platform-specific binary, run:
-
-```sh
-yarn run pack
+For example, if you have WARC files in a directory named `my_archive_collection`, you would run:
+```bash
+python warc_image_fixer.py ./my_archive_collection
 ```
-
-The standalone app will then be available in the `./dist/` directory.
